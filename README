@@ -1,7 +1,7 @@
 newspaper-dog is a tool to fetch and store news from newspaper sites
 
 pre-requisites:
-apt-get install libmodern-perl-perl libredis-perl libwww-mechanize-perl redis-server wkhtmltopdf
+apt-get install libmodern-perl-perl libredis-perl libwww-mechanize-perl redis-server wkhtmltopdf xvfb
 
 http://metacpan.org/pod/WKHTMLTOPDF
 http://wkhtmltopdf.org/
