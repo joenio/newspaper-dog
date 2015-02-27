@@ -1,0 +1,49 @@
+newspaper-dog is a tool to fetch and store news from newspaper sites
+
+pre-requisites:
+apt-get install libmodern-perl-perl libredis-perl libwww-mechanize-perl redis-server wkhtmltopdf
+
+http://metacpan.org/pod/WKHTMLTOPDF
+http://wkhtmltopdf.org/
+http://metacpan.org/pod/WWW::Mechanize::PhantomJS
+http://phantomjs.org/
+
+Jornais que serão consultados:
+* http://tribunadoceara.uol.com.br
+
+apagar todas as chaves no redis
+redis-cli KEYS "*" | xargs redis-cli DEL
+
+TODO
+* respeitar robots.txt, usar WWW::RobotRules
+* ler sobre OpenSearch spec http://www.opensearch.org/Specifications/OpenSearch/1.1
+
+ 
+* http://tribunadoceara.uol.com.br/noticias/wp-admin/admin-ajax.php
+* http://tribunadoceara.uol.com.br/esportes/wp-admin/admin-ajax.php
+
+var especial = {"dataaction":"esp_infinite_scroll","dataurl":"http:\/\/tribunadoceara.uol.com.br\/noticias\/wp-admin\/admin-ajax.php"};
+
+return $('#load-more').click(function() {
+     var item1, item2, item3, items, tmp;
+     $.ajax({
+       url: especial.dataurl,
+       type: 'POST',
+       dataType: 'html',
+       data: {
+               offset: $container.find('.item').length,
+               action: especial.dataaction, 
+               filtro: $('#archive').val()
+             },
+       beforeSend: function( xhr ) {
+         $('#load-more').addClass('btn-loading');
+       },
+       success:function(data){
+         if (data == '') {
+           $('#load-more').hide();
+           return false;
+         };
+         $('#load-more').removeClass('btn-loading');
+         tmp = $().add(data);
+       }
+     })

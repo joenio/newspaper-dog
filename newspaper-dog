@@ -1,0 +1,74 @@
+#!/usr/bin/env perl
+use Modern::Perl;
+use WWW::Mechanize;
+use Redis;
+
+close STDERR; open STDERR, '>>', 'newspaper-dog.err';
+
+my $HOME = 'http://tribunadoceara.uol.com.br';
+
+my $mech = WWW::Mechanize->new(
+  agent => 'newspaper-dog/0.01',
+  autocheck => 0,
+);
+
+my $redis = Redis->new;
+
+# return false for pages that has no content, eg:
+# * listing news
+# * list authors of blogs
+# * list things that not is a news page
+sub page_is_a_post {
+  my $html = shift;
+  $html =~ m/<article /igo;
+}
+
+sub fetch_if_not_exists {
+  my $url = shift;
+  say "request: $url";
+  $mech->get($url);
+  $redis->set($url => $mech->status);
+  $redis->expire($url, 5184000); # 5184000 seconds = 60 * (24 * 60 * 60) = 60 days
+  unless ($mech->success) {
+    warn $mech->status;
+    return;
+  }
+  if ($mech->is_html) {
+    my $slug = $mech->uri->path;
+    $slug =~ s#^/|/$##g; # remove / do inicio e do final
+    $slug =~ s#[/.]#-#g;
+    if ($slug && $slug !~ m/-page-\d+$/ && page_is_a_post($mech->content)) {
+      print " -> " . $slug;
+      print " +html";
+      $mech->save_content("htmls/$slug.html");
+      print " +png";
+      `wkhtmltoimage --quiet --disable-smart-width --width 1280 --quality 30 $url images/$slug.png`;
+      say "";
+    }
+  }
+}
+
+sub find_all_links {
+  my $url = shift;
+  fetch_if_not_exists($url);
+  my @links = $mech->find_all_links(url_regex => qr|^$HOME|i);
+  foreach (grep { !$redis->exists($_) } map { $_->url } @links) {
+    find_all_links($_);
+  }
+}
+
+foreach my $menu ( ('noticias', 'esportes', 'diversao', 'empregos') ) {
+  my $offset = 0;
+  do {
+    $offset++;
+    $mech->post("http://tribunadoceara.uol.com.br/$menu/wp-admin/admin-ajax.php",
+      {offset => $offset, action => 'esp_infinite_scroll'});
+    my @links = $mech->find_all_links(url_regex => qr|^$HOME|i);
+    foreach (grep { !$redis->exists($_) } map { $_->url } @links) {
+      find_all_links($_);
+    }
+
+  } until $mech->response->header('content_length') > 0;
+}
+
+find_all_links($HOME);
