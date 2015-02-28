@@ -23,7 +23,7 @@ sub page_is_a_post {
   $html =~ m/<article /igo;
 }
 
-sub fetch_if_not_exists {
+sub fetch_and_save {
   my $url = shift;
   say "request: $url";
   $mech->get($url);
@@ -50,9 +50,9 @@ sub fetch_if_not_exists {
 
 sub find_all_links {
   my $url = shift;
-  fetch_if_not_exists($url);
-  my @links = $mech->find_all_links(url_regex => qr|^$HOME|i);
-  foreach (grep { !$redis->exists($_) } map { $_->url } @links) {
+  fetch_and_save($url);
+  my @links = map { $_->url } $mech->find_all_links(url_regex => qr|^$HOME|i);
+  foreach (grep { !$redis->exists($_) } @links) {
     find_all_links($_);
   }
 }

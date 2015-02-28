@@ -47,3 +47,10 @@ return $('#load-more').click(function() {
          tmp = $().add(data);
        }
      })
+
+
+PROXIMOS SITES:
+
+* http://diariodonordeste.verdesmares.com.br/
+* http://www.oestadoce.com.br/
+* http://www.opovo.com.br/jornaldehoje/
