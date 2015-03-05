@@ -52,8 +52,12 @@ sub find_all_links {
   my $url = shift;
   fetch_and_save($url);
   my @links = map { $_->url } $mech->find_all_links(url_regex => qr|^$HOME|i);
-  foreach (grep { !$redis->exists($_) } @links) {
-    find_all_links($_);
+  foreach my $url (grep { !$redis->exists($_) } @links) {
+    $redis->sadd('links', $url);
+  }
+  @links = undef; # dealloc memory
+  while (my $url = $redis->spop('links')) {
+    find_all_links($url);
   }
 }
 
@@ -63,12 +67,19 @@ foreach my $menu ( ('noticias', 'esportes', 'diversao', 'empregos') ) {
     $offset++;
     $mech->post("http://tribunadoceara.uol.com.br/$menu/wp-admin/admin-ajax.php",
       {offset => $offset, action => 'esp_infinite_scroll'});
-    my @links = $mech->find_all_links(url_regex => qr|^$HOME|i);
-    foreach (grep { !$redis->exists($_) } map { $_->url } @links) {
-      find_all_links($_);
+    my @links = map { $_->url } $mech->find_all_links(url_regex => qr|^$HOME|i);
+    foreach my $url (grep { !$redis->exists($_) } @links) {
+      $redis->sadd('links', $url);
     }
-
+    @links = undef; # dealloc memory
+    while (my $url = $redis->spop('links')) {
+      find_all_links($url);
+    }
   } until $mech->response->header('content_length') > 0;
 }
 
 find_all_links($HOME);
+
+# consumo de memoria RES
+# 17:10 = 27160
+# 17:20 = 29840
