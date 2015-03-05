@@ -48,17 +48,16 @@ sub fetch_and_save {
   }
 }
 
-sub find_all_links {
+sub run {
   my $url = shift;
-  fetch_and_save($url);
-  my @links = map { $_->url } $mech->find_all_links(url_regex => qr|^$HOME|i);
-  foreach my $url (grep { !$redis->exists($_) } @links) {
-    $redis->sadd('links', $url);
-  }
-  @links = undef; # dealloc memory
-  while (my $url = $redis->spop('links')) {
-    find_all_links($url);
-  }
+  do {
+    fetch_and_save($url);
+    my @links = map { $_->url } $mech->find_all_links(url_regex => qr|^$HOME|i);
+    foreach my $url (grep { !$redis->exists($_) } @links) {
+      $redis->sadd('links', $url);
+    }
+    undef @links; # dealloc memory
+  } while $url = $redis->spop('links');
 }
 
 foreach my $menu ( ('noticias', 'esportes', 'diversao', 'empregos') ) {
@@ -71,15 +70,8 @@ foreach my $menu ( ('noticias', 'esportes', 'diversao', 'empregos') ) {
     foreach my $url (grep { !$redis->exists($_) } @links) {
       $redis->sadd('links', $url);
     }
-    @links = undef; # dealloc memory
-    while (my $url = $redis->spop('links')) {
-      find_all_links($url);
-    }
+    undef @links; # dealloc memory
   } until $mech->response->header('content_length') > 0;
 }
 
-find_all_links($HOME);
-
-# consumo de memoria RES
-# 17:10 = 27160
-# 17:20 = 29840
+run($HOME);
