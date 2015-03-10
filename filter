@@ -1,0 +1,20 @@
+#!/usr/bin/env perl
+use Modern::Perl;
+
+my $keywords = join("|", @ARGV);
+
+sub slurp {
+  my $file = shift;
+  open FILE, '<', $file;
+  local $/ = undef;
+  my $FILE = <FILE>;
+  close FILE;
+  return $FILE;
+}
+
+foreach my $file (glob("htmls/*")) {
+  my $FILE = slurp $file;
+  if ($FILE =~ m/$keywords/sigo) {
+    say $file;
+  }
+}
