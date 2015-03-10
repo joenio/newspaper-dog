@@ -14,7 +14,7 @@ sub slurp {
 
 foreach my $file (glob("htmls/*")) {
   my $FILE = slurp $file;
-  if ($FILE =~ m/$keywords/sigo) {
+  if ($FILE =~ m/\s(?:$keywords)\s/sigo) {
     say $file;
   }
 }
