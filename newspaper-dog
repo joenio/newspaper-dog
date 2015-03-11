@@ -52,11 +52,9 @@ sub run {
   my $url = shift;
   do {
     fetch_and_save($url);
-    my @links = map { $_->url } $mech->find_all_links(url_regex => qr|^$HOME|i);
-    foreach my $url (grep { !$redis->exists($_) } @links) {
+    foreach my $url (grep { !$redis->exists($_) } map { $_->url } $mech->find_all_links(url_regex => qr|^$HOME|i)) {
       $redis->sadd('links', $url);
     }
-    undef @links; # dealloc memory
   } while $url = $redis->spop('links');
 }
 
@@ -66,11 +64,9 @@ foreach my $menu ( ('noticias', 'esportes', 'diversao', 'empregos') ) {
     $offset++;
     $mech->post("http://tribunadoceara.uol.com.br/$menu/wp-admin/admin-ajax.php",
       {offset => $offset, action => 'esp_infinite_scroll'});
-    my @links = map { $_->url } $mech->find_all_links(url_regex => qr|^$HOME|i);
-    foreach my $url (grep { !$redis->exists($_) } @links) {
+    foreach my $url (grep { !$redis->exists($_) } map { $_->url } $mech->find_all_links(url_regex => qr|^$HOME|i)) {
       $redis->sadd('links', $url);
     }
-    undef @links; # dealloc memory
   } until $mech->response->header('content_length') > 0;
 }
 
