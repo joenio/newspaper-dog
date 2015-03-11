@@ -41,8 +41,8 @@ sub fetch_and_save {
       print " -> " . $slug;
       print " +html";
       $mech->save_content("htmls/$slug.html");
-      print " +png";
-      `./wkhtmltoimage.sh --quiet --width 1280 --quality 30 $url images/$slug.png`;
+      #print " +png";
+      #`./wkhtmltoimage.sh --quiet --width 1280 --quality 30 $url images/$slug.png`;
       say "";
     }
   }
