@@ -10,6 +10,7 @@ my $HOME = 'http://tribunadoceara.uol.com.br';
 my $mech = WWW::Mechanize->new(
   agent => 'newspaper-dog/0.01',
   autocheck => 0,
+  stack_depth => 50,
 );
 
 my $redis = Redis->new;
