@@ -14,7 +14,24 @@ sub slurp {
 
 foreach my $file (glob("htmls/*")) {
   my $FILE = slurp $file;
-  if ($FILE =~ m/\s(?:$keywords)\s/sigo) {
-    say $file;
+  if ($FILE =~ m/\s(?:$keywords)\s/i) {
+    if ($FILE =~ m|<time pubdate [^>]+>[^<]+(\d{4})</time>|i) {
+      say "$file;$1";
+    }
+    elsif ($FILE =~ m$rel="category tag">[^<+]</a> |\d{2}/\d{2}/(\d{4}) -$i) {
+      say "$file;$1";
+    }
+    else {
+      say "$file;????";
+    }
   }
 }
+
+#<div class="post-meta">
+#<a href="http://tribunadoceara.uol.com.br/copa-das-confederacoes-2013/author/thiago/" title="Posts de Thiago Sampaio" rel="author">Thiago Sampaio</a> em 
+#<a href="http://tribunadoceara.uol.com.br/copa-das-confederacoes-2013/espanha/" rel="category tag">Espanha</a> |01/07/2013 - 10:20 
+#</div>
+#<time pubdate datetime="2014-02-21" title="26 de março">26 de março de 2014</time>
+#<time pubdate datetime="2014-02-21" title="15 de dezembro">15 de dezembro de 2014</time>
+#<time pubdate datetime="2014-02-21" title="14 de outubro">14 de outubro de 2013</time>
+#<time pubdate datetime="2014-02-21" title="02 de março">02 de março de 2015</time>
